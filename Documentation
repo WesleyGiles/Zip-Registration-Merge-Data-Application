@@ -1,0 +1,69 @@
+This file was able to successfully take an input folder that the user downloaded and process it through the application, which was then able to read and process the input folder to filter data and create unique output files within an output folder directory which was also made 
+by the user. This created databases based on all of the unique 'state' and 'vehicle make' combinations of all vehicles and states that were located in the input folder. The format of data was exactly as expected in the format of:
+{'Zip Code', '2010', '2011', '2012', ..... '2021', '2022', '2023', '2024'}, as the years were based on what was found in the input folder, varying from vehicle to vehicle and state to state. 
+
+Here is the code that was used to make this application using Python:
+
+'''
+This program extracts Microsoft Excel CSV databases from an input folder created by the user 
+that saves the new, filtered data to an output folder directory selected by the user. Databases
+are created for every vehicle based on their make and state. These classifications are used to 
+determine the total verhicle registrations across every zip code in the state for a 
+particular vehicle make over the course of the years in which they appear in with every 
+file found in the input_folder_path. 
+'''
+
+from pathlib import Path
+import pandas as pd
+
+# Input/Output folder directories
+input_folder_path = Path(r"C:\Software Systems Capstone\Registration Data Downloads (Zip)")
+output_folder_path = Path(r"C:\Software Systems Capstone\Registration files (Zip)")
+
+# Read file-by-file
+def process_files(input_folder_path, output_folder_path):
+    output_folder_path.mkdir(parents=True, exist_ok=True)
+
+    # Debugging: Ensure all files are .csv files, if not, then skip the file
+    for file_path in input_folder_path.iterdir():
+        if not file_path.is_file() or file_path.suffix.lower() != ".csv":
+            continue
+
+        print(f"Processing {file_path.name}...")
+
+        df = pd.read_csv(file_path, dtype=str)
+
+        # Filter out necassary columns for data processing
+        required = ["State", "ZIP Code", "Vehicle Make", "Registration Date", "Vehicle Count"]
+        if not all(col in df.columns for col in required):
+            print(f"Skipping {file_path.name} missing required columns")
+            continue
+
+        # Extract Year from the "Registration Date", turning the MM/DD/YYYY format into YYYY
+        df["Year"] = pd.to_datetime(df["Registration Date"], errors="coerce").dt.year
+        df = df.dropna(subset=["Year"])
+        df["Year"] = df["Year"].astype(int)
+
+        # Ensure that "Vehicle Count" is numeric 
+        df["Vehicle Count"] = pd.to_numeric(df["Vehicle Count"], errors="coerce").fillna(0)
+
+        # Group the output files by their unique "State" and "Vehicle Make"
+        for (state, make), group in df.groupby(["State", "Vehicle Make"]):
+
+            # Sum up vehicle registration counts
+            grouped = group.groupby(["ZIP Code", "Year"], as_index=False)["Vehicle Count"].sum()
+
+            # Make each year a unique column
+            pivoted = grouped.pivot(index="ZIP Code", columns="Year", values="Vehicle Count").fillna(0)
+            # Sort the years
+            pivoted = pivoted.sort_index(axis=1)
+            pivoted.reset_index(inplace=True)
+
+            # Save as a .csv file
+            output_file_name = f"{state}_{make}_Registrations.csv"
+            outpath = output_folder_path / output_file_name
+            pivoted.to_csv(outpath, index=False)
+
+            print(f"Saved {outpath}")
+
+process_files(input_folder_path, output_folder_path)
