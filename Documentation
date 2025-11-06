@@ -1,3 +1,7 @@
 This file was able to successfully take an input folder that the user downloaded and process it through the application, which was then able to read and process the input folder to filter data and create unique output files within an output folder directory which was also made 
 by the user. This created databases based on all of the unique 'state' and 'vehicle make' combinations of all vehicles and states that were located in the input folder. The format of data was exactly as expected in the format of:
 {'Zip Code', '2010', '2011', '2012', ..... '2021', '2022', '2023', '2024'}, as the years were based on what was found in the input folder, varying from vehicle to vehicle and state to state. 
+
+DISLCAIMER: There is invalid data that has been appended to the output state registration data as there were zip codes that were in the downloaded state files from the ATLAS website that had zip code and registration data that was foreign to that state. It is unclear why that is
+the case but there were validation checks to see if the wrong zip codes were found in the wrong state from the original downloaded files, and it turns out that it was the case. However, there are not many vehicle registrations belonging to foreign zip code registration counts, 
+so therefore, it should not affect the finalized data too heavily. I may come back to this at a later time to delete the foreign zip code data to ensure complete accuracy of each state and their zip codes by manually deleting the foreign zip codes from the output databases.
